@@ -15,4 +15,4 @@ pip install -r requirements -i https://pypi.tuna.tsinghua.edu.cn/simple
 git pull
 git add .
 git commit -m ""
-git push origin master
+git push origin main
