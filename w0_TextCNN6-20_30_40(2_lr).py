@@ -1,40 +1,31 @@
-import pandas as pd
-import tensorflow.keras as keras
-from keras.preprocessing import sequence
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation
-from keras.layers import Conv1D, GlobalAveragePooling1D, GlobalMaxPooling1D, MaxPooling1D
-from keras.datasets import imdb
-from sklearn.metrics import accuracy_score, classification_report
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.losses import BinaryCrossentropy
 import random
-import numpy as np
-from keras.preprocessing.text import Tokenizer
-from keras.layers import Conv1D, MaxPool1D, Dense, Flatten, concatenate, Embedding, Input
-from keras.models import Model
-from sklearn import metrics
-from tensorflow.keras import backend
-import tensorflow as tf
-import w_datachuli
 import time
 import os
 import sys
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+import tensorflow.keras as keras
+from tensorflow.keras import backend
+from keras.preprocessing import sequence
+from keras.preprocessing.text import Tokenizer
+from keras.models import Sequential, Model
+from keras.layers import Dense, Dropout, Activation
+from keras.layers import MaxPool1D, Flatten, concatenate, Embedding, Input
+from keras.layers import Conv1D, GlobalAveragePooling1D, GlobalMaxPooling1D, MaxPooling1D
+from keras.datasets import imdb
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.losses import BinaryCrossentropy
+from sklearn import metrics
+import w_datachuli
 
 
 # print("*************************【 指定GPU**************************")
-
-# 返回True或者False
-# tf.config.list_physical_devices('GPU')
-
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 os.environ['TF_XLA_FLAGS'] = '--tf_xla_enable_xla_devices'
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"  # 使用第一、二块GPU（从0开始
-
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"  # 使用第一、二块GPU（从0开始)
 # print("*************************指定GPU 】**************************")
-
-
 
 # 解决报错 NotFoundError: No algorithm worked! 
 # start
@@ -50,7 +41,7 @@ session = InteractiveSession(config=config)
 class Logger(object):
     def __init__(self, filename='default.log', stream=sys.stdout):
         self.terminal = stream
-        self.log = open(filename, 'w')
+        self.log = open(filename, 'a', encoding='utf-8')
 
     def write(self, message):
         self.terminal.write(message)
@@ -58,10 +49,6 @@ class Logger(object):
 
     def flush(self):
         pass
-
-
-sys.stdout = Logger('./dataset/a.txt', sys.stdout)  # 生成日志文件
-sys.stderr = Logger('./dataset/a.log_file', sys.stderr)
 
 
 def get_lr_metric(optimizer):  # printing the value of the learning rate
@@ -103,7 +90,7 @@ def train_model(train_data, train_label, test_data, test_label):
 
     model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy', lr_metric])
     lr = backend.get_value(model.optimizer.lr)
-    print("初始lr=", lr)
+    # print("初始lr=", lr)
     model.summary()
 
     # 模型训练
@@ -148,13 +135,6 @@ def train_model(train_data, train_label, test_data, test_label):
     train_label = np.argmax(train_label, axis=1)
     train_labal_true = list(map(str, train_label))
 
-    # with open('./detect_result.txt', 'a+') as f:
-        # f.write(f"{'准确率':20}{str(metrics.accuracy_score(test_labal_true, test_labal_predict))}\n")
-        # f.write(f"{'精度！':20}{str(metrics.precision_score(test_labal_true, test_labal_predict, average='weighted'))}\n")
-        # f.write(f"{'召回率':20}{str(metrics.recall_score(test_labal_true, test_labal_predict, average='weighted'))}\n")
-        # f.write(f"{'f1-score':20}{str(metrics.f1_score(test_labal_true, test_labal_predict, average='weighted'))}\n")
-        # f.write(f"{'Test accuracy':20}{str(round(metrics.accuracy_score(test_labal_true, test_labal_predict), 3))}\n\n\n")
-
     return (str(metrics.accuracy_score(test_labal_true, test_labal_predict)), 
             str(metrics.precision_score(test_labal_true, test_labal_predict, average='weighted')), 
             str(metrics.recall_score(test_labal_true, test_labal_predict, average='weighted')), 
@@ -172,32 +152,44 @@ def train_model(train_data, train_label, test_data, test_label):
     #       pd.crosstab(np.array(train_labal_true), np.array(train_labal_predict),
     #                   rownames=['Actuall'], colnames=['Predicted']))
     # print('\nCNN 1D - Test accuracy:', round(metrics.accuracy_score(test_labal_true, test_labal_predict), 3))
-    # print('\nCNN 1D of Test data\n', classification_report(test_labal_true, test_labal_predict))
+    # print('\nCNN 1D of Test data\n', metrics.classification_report(test_labal_true, test_labal_predict))
     # print('\nCNN 1D - Test Confusion Matrix\n\n', pd.crosstab(np.array(test_labal_true), np.array(test_labal_predict),
     #                                                           rownames=['Actuall'], colnames=['Predicted']))
 
 
 if __name__ == '__main__':
 
-    detect_result_dir = './detect/'
-    normalpath = "./dataset/1in2outPN.json"
-    normal_addr_txs_num_path = './dataset/data_ql/1in2outPN_addr_num.txt'
+    log_dir = './detect_log/'                                               # log
+    detect_result_dir = './detect_result/'                                  # detect result
+    normalpath = "./dataset/1in2outPN.json"                                 # normalpath
+    normal_addr_txs_num_path = './dataset/data_ql/1in2outPN_addr_num.txt'   # normal_addr_txs_num_path
+    
+    time_start = time.localtime(time.time())
+    time_path = time.strftime('%Y%m%d_%H%M%S', time_start)
+    log_path = log_dir + 'stdout_' + time_path + '.log'
+    detect_result_path = detect_result_dir + 'result_' + time_path + '.txt'
+
+    # log
+    sys.stdout = Logger(log_path, sys.stdout)
+    sys.stderr = Logger(log_dir + 'stderr.log', sys.stderr)
+
+    # schemas
     specialpath_and_addr_txs_num_path = [
-        ('1_LSB', './dataset/1_LSB.json', './dataset/data_ql/1_LSB_addr_num.txt'), # 1_LSB
-        ('2_yxb', './dataset/2_yxb.json', './dataset/data_ql/2_yxb_addr_num.txt'), # 2_yxb
+        ('1_LSB', './dataset/1_LSB.json', './dataset/data_ql/1_LSB_addr_num.txt'),                      # 1_LSB
+        ('2_yxb', './dataset/2_yxb.json', './dataset/data_ql/2_yxb_addr_num.txt'),                      # 2_yxb
         ('3_stz_ver3.2', './dataset/3_stz_ver3.2.json', './dataset/data_ql/3_stz_ver3.2_addr_num.txt'), # 3_stz_ver3.2
-        ('4_opreturn', './dataset/4_opreturn.json', './dataset/data_ql/4_opreturn_addr_num.txt'), # 4_opreturn
-        ('6_DSA', './dataset/6_DSA.json', './dataset/data_ql/6_DSA_addr_num.txt'), # 6_DSA
-        ('7_CHT02', './dataset/7_CHT02.json', './dataset/data_ql/7_CHT02_addr_num.txt'), # 7_CHT02
-        ('8_lq_LSB_7', './dataset/8_lq_LSB_7.json', './dataset/data_ql/8_lq_LSB_7_addr_num.txt') # 8_lq_LSB_7
+        ('4_opreturn', './dataset/4_opreturn.json', './dataset/data_ql/4_opreturn_addr_num.txt'),       # 4_opreturn
+        ('6_DSA', './dataset/6_DSA.json', './dataset/data_ql/6_DSA_addr_num.txt'),                      # 6_DSA
+        ('7_CHT02', './dataset/7_CHT02.json', './dataset/data_ql/7_CHT02_addr_num.txt'),                # 7_CHT02
+        ('8_lq_LSB_7', './dataset/8_lq_LSB_7.json', './dataset/data_ql/8_lq_LSB_7_addr_num.txt')        # 8_lq_LSB_7
     ]
 
-    time_path = time.strftime('%Y%m%d_%H%M%S', time.localtime(time.time()))
-    detect_result_path = detect_result_dir + 'result_' + time_path + '.txt'
+    # train & detect
     for schema in specialpath_and_addr_txs_num_path:
-        now = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
 
-        with open(detect_result_path, 'a+') as f:
+        # title
+        now = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        with open(detect_result_path, 'a') as f:
             f.write(f"\n\n\n{'|'}{'-'*87}{'|'}\n{'|   | '}{schema[0]:<19}{'|'}{' '*42}{now}{' |'}\n{'|---'}{'+--------------------'*4}{'|'}\n")
             f.write(f"{'|   '}{'| accuracy':<21}{'| precision':<21}{'| recall':<21}{'| F1':<21}{'|'}\n{'|---'}{'+--------------------'*4}{'|'}\n")
 
@@ -208,10 +200,9 @@ if __name__ == '__main__':
                                                                                     special_addr_txs_num_path=schema[2])
             max_length = 1400  # 将句子填充到最大长度400 使数据长度保持一致
             alldata = sequence.pad_sequences(alldata_t, maxlen=max_length, padding='post')
-            print("alldata[1]", alldata[1])
+            # print("alldata[1]", alldata[1])
             all_label_oh = keras.utils.to_categorical(all_label, num_classes=2)  # 将标签转换为one-hot编码，改变标签的维度
-            print("all_label_oh[1008]", all_label_oh[1008], len(all_label_oh))
-
+            # print("all_label_oh[1008]", all_label_oh[1008], len(all_label_oh))
             allnum = len(alldata)
             num1 = int(allnum * 0.8)  # 1820
             train_data = alldata[:num1]
@@ -225,10 +216,12 @@ if __name__ == '__main__':
 
             result = train_model(train_data, train_label, val_data, val_label)
 
-            with open(detect_result_path, 'a+') as f:
+            # result
+            with open(detect_result_path, 'a') as f:
                 f.write(f"{'| '}{i+1:<2}{'| '}{result[0]:<19}{'| '}{result[1]:19}{'| '}{result[2]:19}{'| '}{result[3]:19}{'|'}\n{'|---'}{'+--------------------'*4}{'|'}\n")
 
-            # print("normalpath:", normalpath)
-            # print("specialpath:", specialpath)
-
-            # print("耗时:" + str(time.time() - time_start))
+    # running time
+    time_start = time.strftime('%Y-%m-%d %H:%M:%S', time_start)
+    time_end = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+    with open(detect_result_path, 'a') as f:
+        f.write(f"\n\n\n{time_start}\n{time_end}")
