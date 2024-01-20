@@ -10,7 +10,8 @@ cd /home/talentq/workstation/project/textCNN
 source ../../venv/textCNN/bin/activate
 
 # 后台执行
- nohup python w0_TextCNN6-20_30_40\(2_lr\).py > /dev/null 2>'./detect_log/nohup_err.log' &
+echo -e "\n\n" >> './detect_log/nohup_err.log'
+nohup python w0_TextCNN6-20_30_40\(2_lr\).py > /dev/null 2>>'./detect_log/nohup_err.log' &
 
 # 查看进程
 sleep 1

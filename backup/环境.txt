@@ -287,3 +287,13 @@ pyreadline==2.1
 mkl-fft==1.3.1
 win-inet-pton==1.1.0
 mkl-random==1.2.2
+
+
+为了清理磁盘空间卸载了这些，防止出错，记录在这里：
+g++-8 javascript-common libaccinj64-10.1 libcublas10 libcublaslt10 libcudart10.1 libcufft10 libcufftw10 libcuinj64-10.1 libcupti-dev libcupti-doc libcupti10.1 libcurand10
+  libcusolver10 libcusolvermg10 libcusparse10 libjs-jquery libncurses5 libnppc10 libnppial10 libnppicc10 libnppicom10 libnppidei10 libnppif10 libnppig10 libnppim10 libnppist10
+  libnppisu10 libnppitc10 libnpps10 libnvblas10 libnvgraph10 libnvidia-ml-dev libnvjpeg10 libnvrtc10.1 libnvtoolsext1 libnvvm3 libstdc++-8-dev libthrust-dev libtinfo5 libvdpau-dev
+  node-html5shiv nvidia-cuda-dev nvidia-cuda-doc nvidia-cuda-gdb nvidia-opencl-dev nvidia-profiler nvidia-visual-profiler ocl-icd-opencl-dev opencl-c-headers
+
+果然发现问题：Could not load dynamic library 'libcusolver.so.10'
+sudo apt install libcusolver10

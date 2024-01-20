@@ -1,4 +1,3 @@
-import random
 import time
 import os
 import sys
@@ -8,14 +7,10 @@ import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras import backend
 from keras.preprocessing import sequence
-from keras.preprocessing.text import Tokenizer
-from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Activation
-from keras.layers import MaxPool1D, Flatten, concatenate, Embedding, Input
-from keras.layers import Conv1D, GlobalAveragePooling1D, GlobalMaxPooling1D, MaxPooling1D
-from keras.datasets import imdb
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.losses import BinaryCrossentropy
+from keras.models import Model
+from keras.layers import Dense, Dropout
+from keras.layers import Flatten, concatenate, Embedding, Input
+from keras.layers import Conv1D, MaxPooling1D
 from sklearn import metrics
 import w_datachuli
 
@@ -29,12 +24,12 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"  # 使用第一、二块GPU（从0开
 
 # 解决报错 NotFoundError: No algorithm worked! 
 # start
-from tensorflow.compat.v1 import ConfigProto
-from tensorflow.compat.v1 import InteractiveSession
+# from tensorflow.compat.v1 import ConfigProto
+# from tensorflow.compat.v1 import InteractiveSession
 
-config = ConfigProto()
-config.gpu_options.allow_growth = True
-session = InteractiveSession(config=config)
+# config = ConfigProto()
+# config.gpu_options.allow_growth = True
+# session = InteractiveSession(config=config)
 # end
 
 
@@ -112,7 +107,7 @@ def train_model(train_data, train_label, test_data, test_label):
         save_best_only=True,
         save_weights_only=True,
         mode='auto',
-        period=1)
+        save_freq="epoch") #  period=1
     model.fit(train_data,
               train_label,
               batch_size=150,
