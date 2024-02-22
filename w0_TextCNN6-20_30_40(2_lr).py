@@ -156,8 +156,8 @@ if __name__ == '__main__':
 
     log_dir = './detect_log/'                                               # log
     detect_result_dir = './detect_result/'                                  # detect result
-    normalpath = "./dataset/1in2outPN.json"                                 # normalpath
-    normal_addr_txs_num_path = './dataset/data_ql/1in2outPN_addr_num.txt'   # normal_addr_txs_num_path
+    normalpath = "./dataset/txs_json/1in2outPN.json"                        # normalpath
+    normal_addr_related_txs_num_path = './dataset/addr_related_txs_num/1in2outPN_addr_related_txs_num.txt'   # normal_addr_related_txs_num_path
     
     time_start = time.localtime(time.time())
     time_path = time.strftime('%Y%m%d_%H%M%S', time_start)
@@ -169,18 +169,21 @@ if __name__ == '__main__':
     sys.stderr = Logger(log_dir + 'stderr.log', sys.stderr)
 
     # schemas
-    specialpath_and_addr_txs_num_path = [
-        ('1_LSB', './dataset/1_LSB.json', './dataset/data_ql/1_LSB_addr_num.txt'),                      # 1_LSB
-        ('2_yxb', './dataset/2_yxb.json', './dataset/data_ql/2_yxb_addr_num.txt'),                      # 2_yxb
-        ('3_stz_ver3.2', './dataset/3_stz_ver3.2.json', './dataset/data_ql/3_stz_ver3.2_addr_num.txt'), # 3_stz_ver3.2
-        ('4_opreturn', './dataset/4_opreturn.json', './dataset/data_ql/4_opreturn_addr_num.txt'),       # 4_opreturn
-        ('6_DSA', './dataset/6_DSA.json', './dataset/data_ql/6_DSA_addr_num.txt'),                      # 6_DSA
-        ('7_CHT02', './dataset/7_CHT02.json', './dataset/data_ql/7_CHT02_addr_num.txt'),                # 7_CHT02
-        ('8_lq_LSB_7', './dataset/8_lq_LSB_7.json', './dataset/data_ql/8_lq_LSB_7_addr_num.txt')        # 8_lq_LSB_7
+    specialpath_and_addr_related_txs_num_path = [
+        ('1_LSB', './dataset/txs_json/1_LSB.json', './dataset/addr_related_txs_num/1_LSB_addr_related_txs_num.txt'),                      # 1_LSB
+        ('2_yxb', './dataset/txs_json/2_yxb.json', './dataset/addr_related_txs_num/2_yxb_addr_related_txs_num.txt'),                      # 2_yxb
+        ('3_stz_ver3.2', './dataset/txs_json/3_stz_ver3.2.json', './dataset/addr_related_txs_num/3_stz_ver3.2_addr_related_txs_num.txt'), # 3_stz_ver3.2
+        ('4_opreturn', './dataset/txs_json/4_opreturn.json', './dataset/addr_related_txs_num/4_opreturn_addr_related_txs_num.txt'),       # 4_opreturn
+        ('6_DSA', './dataset/txs_json/6_DSA.json', './dataset/addr_related_txs_num/6_DSA_addr_related_txs_num.txt'),                      # 6_DSA
+        ('7_CHT02', './dataset/txs_json/7_CHT02.json', './dataset/addr_related_txs_num/7_CHT02_addr_related_txs_num.txt'),                # 7_CHT02
+        ('8_lq_LSB_7', './dataset/txs_json/8_lq_LSB_7.json', './dataset/addr_related_txs_num/8_lq_LSB_7_addr_related_txs_num.txt')        # 8_lq_LSB_7
     ]
 
+    # save dataset&label
+    save_path = './dataset/xlsx_DatasetAndLabel/dataset.xlsx'
+
     # train & detect
-    for schema in specialpath_and_addr_txs_num_path:
+    for schema in specialpath_and_addr_related_txs_num_path:
 
         # title
         now = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
@@ -189,10 +192,11 @@ if __name__ == '__main__':
             f.write(f"{'|   '}{'| accuracy':<21}{'| precision':<21}{'| recall':<21}{'| F1':<21}{'|'}\n{'|---'}{'+--------------------'*4}{'|'}\n")
 
         for i in range(5):
-            alldata_t, all_label, normalpath, specialpath = w_datachuli.shujuchuli(normalpath=normalpath, 
+            alldata_t, all_label, normalpath, specialpath = w_datachuli.data_processing(normalpath=normalpath, 
                                                                                     specialpath=schema[1],
-                                                                                    normal_addr_txs_num_path=normal_addr_txs_num_path, 
-                                                                                    special_addr_txs_num_path=schema[2])
+                                                                                    normal_addr_related_txs_num_path=normal_addr_related_txs_num_path, 
+                                                                                    special_addr_related_txs_num_path=schema[2],
+                                                                                    save_path=save_path)
             max_length = 1400  # 将句子填充到最大长度400 使数据长度保持一致
             alldata = sequence.pad_sequences(alldata_t, maxlen=max_length, padding='post')
             # print("alldata[1]", alldata[1])

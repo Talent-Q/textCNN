@@ -1,13 +1,10 @@
-import json
-import os
-import openpyxl
-import random
-from keras.preprocessing.text import Tokenizer, text_to_word_sequence
-from util.tools import str_to_json
+from typing import List
+from keras.preprocessing.text import Tokenizer
+from util.tools import addr_related_txs_num_To_dict, read_txs_json, shuffle_dataset, back_up_dataset, random_data, trainset
 
 
-def tongyigeshi(rows, normal_addr_txs_num_path, special_addr_txs_num_path):  # 输入json,统一格式
-    addresses = str_to_json(normal_addr_txs_num_path, special_addr_txs_num_path)
+def _data_preprocessing(rows, normal_addr_related_txs_num_path, special_addr_related_txs_num_path) -> List[str]:  # 输入json,统一格式
+    addresses = addr_related_txs_num_To_dict(normal_addr_related_txs_num_path, special_addr_related_txs_num_path)
     maxlength = 0
     rowslist = []
     for row in rows:
@@ -23,14 +20,14 @@ def tongyigeshi(rows, normal_addr_txs_num_path, special_addr_txs_num_path):  # �
         outputscript = []
         outputtype = []
         outputdata_string = []
-        addr_txs_num = []
+        addr_related_txs_num = []
         for a in rowinput:
             inputad.append(a.get("addresses"))
             inputvalue.append(a.get("output_value"))
             inputscript.append(a.get("script"))
             input_prehash.append(a.get("prev_hash"))
             for i in a.get("addresses"):
-                addr_txs_num.append(addresses[i])
+                addr_related_txs_num.append(addresses[i])
         for a in rowoutput:
             outputad.append(a.get("addresses"))
             outputvalue.append(a.get("value"))
@@ -39,29 +36,29 @@ def tongyigeshi(rows, normal_addr_txs_num_path, special_addr_txs_num_path):  # �
             outputdata_string.append(a.get("data_hex"))  # data_string
             if a.get("addresses") is not None:
                 for i in a.get("addresses"):
-                    addr_txs_num.append(addresses[i])
+                    addr_related_txs_num.append(addresses[i])
 
-        # 6. 调整了 原始 的字段顺序，并删除了几个字段, 并加入 addr_txs_num (0.926, 0.959, 0.933)
+        # 6. 调整了 原始 的字段顺序，并删除了几个字段, 并加入 addr_related_txs_num (0.926, 0.959, 0.933)
         # rowlist = [row.get("total"),    # number
         #            row.get("fees"),     # number
         #            row.get("vin_sz"),   # number
         #            inputvalue,          # number
         #            row.get("vout_sz"),  # number
         #            outputvalue,         # number
-        #            addr_txs_num,        # number
+        #            addr_related_txs_num,        # number
         #            inputad,
         #            outputad,
         #            inputscript,
         #            outputscript]
 
-        # 5. 调整了 原始 的字段顺序，并加入 addr_txs_num (0.945, 0.952, 0.911, 0.947, 0.926) => 0.94
+        # 5. 调整了 原始 的字段顺序，并加入 addr_related_txs_num (0.945, 0.952, 0.911, 0.947, 0.926) => 0.94
         rowlist = [row.get("total"),    # number
                    row.get("fees"),     # number
                    row.get("vin_sz"),   # number
                    inputvalue,          # number
                    row.get("vout_sz"),  # number
                    outputvalue,         # number
-                   addr_txs_num,        # number
+                   addr_related_txs_num,        # number
                    inputad,
                    outputad,
                    tx_hash,
@@ -71,11 +68,11 @@ def tongyigeshi(rows, normal_addr_txs_num_path, special_addr_txs_num_path):  # �
                    outputtype,
                    outputdata_string]
 
-        # 4. 原始， 加入 addr_txs_num （0.935, 0.921, 0.971, 0.94, 0.945）=> 0.94
+        # 4. 原始， 加入 addr_related_txs_num （0.935, 0.921, 0.971, 0.94, 0.945）=> 0.94
         # rowlist = [row.get("total"),  # number
         #            row.get("fees"),  # number
         #            row.get("vin_sz"),  # number
-        #            addr_txs_num,  # number，加入的字段
+        #            addr_related_txs_num,  # number，加入的字段
         #            inputad,
         #            inputvalue,  # number
         #            inputscript,
@@ -133,7 +130,6 @@ def tongyigeshi(rows, normal_addr_txs_num_path, special_addr_txs_num_path):  # �
         #            input_prehash]
 
         rowlist = str(rowlist)
-
         rowlist = rowlist.replace('\\n', '')
         rowlist = rowlist.replace('\"', '')
         rowlist = rowlist.replace('\'', '')
@@ -143,7 +139,7 @@ def tongyigeshi(rows, normal_addr_txs_num_path, special_addr_txs_num_path):  # �
         rowlist = rowlist.replace(']', '')
         rowlist = rowlist.replace(' ', '')
 
-        rowlist = " ".join(rowlist)
+        rowlist = " ".join(rowlist)  # 这里在所有字符之间添加了空格，导致后续的分词只对单个字符进行分词
         length = len(rowlist)
         if length > maxlength:
             maxlength = length
@@ -168,180 +164,52 @@ def tongyigeshi(rows, normal_addr_txs_num_path, special_addr_txs_num_path):  # �
     # "outputdata_string":["DA41DCACF75E5CD5623D8C9389D6BE4547482CFEB46C957B0F368FC610805693746573743131310E",NULL,NULL]
 
 
-def tiquziduan(rows):
-    maxlength = 0
-    rowslist = []
-    for row in rows:
-        rowinput = row.get("inputs")
-        rowoutput = row.get("outputs")
-        inputad = []
-        inputvalue = []
-        inputscript = []
-        outputad = []
-        outputvalue = []
-        outputscript = []
-        outputdata_string = []
-        for a in rowinput:
-            inputad.append(a.get("addresses"))
-            inputvalue.append(a.get("output_value"))
-            inputscript.append(a.get("script"))
-        for a in rowoutput:
-            outputad.append(a.get("addresses"))
-            outputvalue.append(a.get("value"))
-            outputscript.append(a.get("script"))
-            outputdata_string.append(a.get("data_hex"))  # data_string
-
-        rowlist = []
-        # rowlist.append(row.get("total"))
-        # rowlist.append(row.get("fees"))
-        # rowlist.append(row.get("vin_sz"))
-        # rowlist.append(inputad)
-        # rowlist.append(inputvalue)
-        rowlist.append(inputscript)
-        # rowlist.append(row.get("vout_sz"))
-        # rowlist.append(outputad)
-        # rowlist.append(outputvalue)
-        # rowlist.append(outputscript)
-        # rowlist.append(outputdata_string)
-        rowlist = str(rowlist)
-
-        rowlist = rowlist.replace('\\n', '')
-        rowlist = rowlist.replace('\"', '')
-        rowlist = rowlist.replace('\'', '')
-        rowlist = rowlist.replace('{', '')
-        rowlist = rowlist.replace('}', '')
-        rowlist = rowlist.replace('[', '')
-        rowlist = rowlist.replace(']', '')
-        rowlist = rowlist.replace(' ', '')
-
-        rowlist = " ".join(rowlist)
-        length = len(rowlist)
-        if length > maxlength:
-            maxlength = length
-
-        rowslist.append(rowlist)
-    print("#maxlength=", maxlength)
-    return rowslist
-
-
-def openfile(file1):
-    rows = []
-    file = open(file1, 'r', encoding="utf-8")  # 读取的文件
-    for line in file.readlines():
-        line = json.loads(line)
-        rows.append(line)
-    return rows
-
-
-def writeinexcel2(datalist, sheet):
-    for z in datalist:
-        sheet.append([z])
-
-
-def writelabel(label, sheet):
-    m = 1
-    n = 2
-    for i in label:
-        sheet.cell(row=m, column=n, value=i)
-        m = m + 1
-
-
-def random_data(sheet):
-    numbers = list(range(1, sheet.max_row + 1))
-    random.shuffle(numbers)
-    for i in numbers:
-        row = sheet[i]
-        r = []
-        for cell in row:
-            r.append(cell.value)
-        sheet.append(r)
-    sheet.delete_rows(1, sheet.max_row // 2)
-
-
-def trainset(sheetfrom, sheetto, start, end):
-    max_col = sheetfrom.max_column
-    # print(max_col)
-    for x in range(start, end + 1):
-        row_data = []
-        for y in range(1, max_col + 1):
-            cell_value = sheetfrom.cell(row=x, column=y).value
-            row_data.append(cell_value)
-        sheetto.append(row_data)
-
-
-def ciqianru(alldata, label):
+def _word_embedding(alldata, label):
     tokenizer = Tokenizer(lower=False, num_words=100)  # 构建索引字典
     tokenizer.fit_on_texts(alldata)  # 构建索引单词
-    word_index = tokenizer.word_index
-    print("#word_index", word_index)
+    # word_index = tokenizer.word_index
+    # print("#word_index", word_index)
 
     sequences = tokenizer.texts_to_sequences(alldata)  # 将字符串转换为整数索引组成的列表
     # print("type(sequences)",type(sequences),len(sequences))
-    data_all = []
-    for string in sequences:
-        data_all.append(string)
+    data_all = sequences
+    # data_all = []
+    # for string in sequences:
+    #     data_all.append(string)
 
     return data_all, label
 
 
-def shujuchuli(normalpath="./dataset/1in2outPN.json", 
-                specialpath="./dataset/7_CHT02.json", 
-                normal_addr_txs_num_path='./dataset/data_ql/1in2outPN_addr_num.txt', 
-                special_addr_txs_num_path='./dataset/data_ql/7_CHT02_addr_num.txt'):
-    object = 'all'  # 'ziduan' or 'all'
-    print("数据提取对象:", object)
+def data_processing(normalpath, specialpath, normal_addr_related_txs_num_path, special_addr_related_txs_num_path, save_path):
+    # 读取原始交易json
+    normal_txs = read_txs_json(normalpath)
+    special_txs = read_txs_json(specialpath)
 
-    normalpath = normalpath  # normal.json
-    normal = openfile(normalpath)
-    if object == 'all':
-        normaldata = tongyigeshi(normal, normal_addr_txs_num_path, special_addr_txs_num_path)
-    else:
-        normaldata = tiquziduan(normal)
+    # 处理数据（手动特征提取）
+    normal_data = _data_preprocessing(normal_txs, normal_addr_related_txs_num_path, special_addr_related_txs_num_path)
+    special_data = _data_preprocessing(special_txs, normal_addr_related_txs_num_path, special_addr_related_txs_num_path)
 
-    specialpath = specialpath  # special.json
-    special = openfile(specialpath)
-    if object == 'all':
-        specialdata = tongyigeshi(special, normal_addr_txs_num_path, special_addr_txs_num_path)
-    else:
-        specialdata = tiquziduan(special)
+    # 打乱数据集
+    dataset = normal_data + special_data
+    label = [0 for _ in range(len(normal_data))] + [1 for _ in range(len(special_data))]
+    dataset, label = shuffle_dataset(dataset, label)
 
-    print("normal数据:", normaldata[4])
-    print("special数据:", specialdata[4])
-    print("normal数据:", normalpath)
-    print("special数据:", specialpath)
+    # 备份数据集
+    back_up_dataset(dataset, label, save_path)
 
-    # print("########### 备份混合数据集 ##############################")
-    alldata = normaldata + specialdata  # list
-    label = []
-    for i in range(len(normaldata)):
-        label.append(0)
-    for i in range(len(specialdata)):
-        label.append(1)
-
-    c = list(zip(alldata, label))
-    random.shuffle(c)
-    alldata, label = zip(*c)
-
-    file3 = openpyxl.Workbook()  # ,encoding = 'utf-8'
-    sheet3 = file3.create_sheet('dataset', 0)
-    writeinexcel2(alldata, sheet3)
-    writelabel(label, sheet3)
-    file3.save('./dataset/file/dataset.xlsx')
-
-    # print("########### 转变为词向量 ##############################")
-
-    alldata_t, label_t = ciqianru(alldata, label)
+    # 词嵌入
+    alldata_t, label_t = _word_embedding(dataset, label)
 
     return alldata_t, label_t, normalpath, specialpath
 
 
 if __name__ == '__main__':
-    # shujuchuli(normalpath="./dataset/1in2outPN.json", 
-    #             specialpath="./dataset/7_CHT02.json",
-    #             normal_addr_txs_num_path='./dataset/data_ql/1in2outPN_addr_num.txt', 
-    #             special_addr_txs_num_path='./dataset/data_ql/7_CHT02_addr_num.txt')
-    
-    shujuchuli(normalpath="./dataset/1in2outPN.json", 
-                specialpath="./dataset/6_DSA.json",
-                normal_addr_txs_num_path='./dataset/data_ql/1in2outPN_addr_num.txt', 
-                special_addr_txs_num_path='./dataset/data_ql/6_DSA_addr_num.txt')
+
+    normalpath="./dataset/txs_json/1in2outPN.json"
+    specialpath="./dataset/txs_json/6_DSA.json"
+    normal_addr_related_txs_num_path='./dataset/addr_related_txs_num/1in2outPN_addr_related_txs_num.txt'
+    special_addr_related_txs_num_path='./dataset/addr_related_txs_num/6_DSA_addr_related_txs_num.txt'
+    save_path = './dataset/xlsx_DatasetAndLabel/dataset.xlsx'
+
+    data_processing(normalpath, specialpath, normal_addr_related_txs_num_path, special_addr_related_txs_num_path, save_path)
+
