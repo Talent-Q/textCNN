@@ -17,3 +17,7 @@ git commit -m ""
 git push origin main
 
  
+# 解决显卡一直被 /usr/bin/nvidia/update 占用
+ps -ef | grep /usr/bin/nvidia/update
+sudo readlink -f /proc/<pid>/exe
+sudo chmod -x /dev/shm/.cache/javra

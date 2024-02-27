@@ -22,16 +22,6 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"  # 使用第一、二块GPU（从0开始)
 # print("*************************指定GPU 】**************************")
 
-# 解决报错 NotFoundError: No algorithm worked! 
-# start
-# from tensorflow.compat.v1 import ConfigProto
-# from tensorflow.compat.v1 import InteractiveSession
-
-# config = ConfigProto()
-# config.gpu_options.allow_growth = True
-# session = InteractiveSession(config=config)
-# end
-
 
 class Logger(object):
     def __init__(self, filename='default.log', stream=sys.stdout):
@@ -108,6 +98,7 @@ def train_model(train_data, train_label, test_data, test_label):
         save_weights_only=True,
         mode='auto',
         save_freq="epoch") #  period=1
+    
     model.fit(train_data,
               train_label,
               batch_size=150,
@@ -191,7 +182,7 @@ if __name__ == '__main__':
             f.write(f"\n\n\n{'|'}{'-'*87}{'|'}\n{'|   | '}{schema[0]:<19}{'|'}{' '*42}{now}{' |'}\n{'|---'}{'+--------------------'*4}{'|'}\n")
             f.write(f"{'|   '}{'| accuracy':<21}{'| precision':<21}{'| recall':<21}{'| F1':<21}{'|'}\n{'|---'}{'+--------------------'*4}{'|'}\n")
 
-        for i in range(5):
+        for i in range(3):
             alldata_t, all_label, normalpath, specialpath = w_datachuli.data_processing(normalpath=normalpath, 
                                                                                     specialpath=schema[1],
                                                                                     normal_addr_related_txs_num_path=normal_addr_related_txs_num_path, 
