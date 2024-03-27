@@ -14,7 +14,7 @@ watch -n 2 nvidia-smi
 git pull
 git add .
 git commit -m ""
-git push origin main
+git push
 
  
 # 解决显卡一直被 /usr/bin/nvidia/update 占用

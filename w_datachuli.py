@@ -125,15 +125,33 @@ def _data_preprocessing(rows: List[Dict], normal_addr_related_txs_num_path: str,
 
 
 def _word_embedding(dataset_texts):
-    # 构建索引字典
+    '''
+    dataset_texts 是一个列表，每一条数据是一个字符串文本；
+    dataset_sequences是函数的输出，也是一个列表，每一条数据是一个数字序列，也称之为向量。
+    实际上就是将字符串文本变成数字序列或者向量。
+    '''
+    # 1. 实例化 Tokenizer 对象
     tokenizer = Tokenizer(lower=False, num_words=100)
 
-    # 构建索引单词
+    # 2. 训练Tokenizer: 将文本数据分词并构建词汇表
+    # tokenizer.word_counts:    每个词在所有文档中出现的次数
+    # tokenizer.word_docs:      每个词出现的文档数量
+    # tokenizer.word_index:     所有word对应的ID编号，从1开始
+    # tokenizer.document_count: 处理的文档数
     tokenizer.fit_on_texts(dataset_texts)
-    # print("#word_index", tokenizer.word_index)
+    print('#######################################')
+    print(tokenizer.word_counts)
+    print('#######################################')
+    print(tokenizer.word_docs)
+    print('#######################################')
+    print(tokenizer.word_index)
+    print('#######################################')
+    print(tokenizer.document_count)
 
-    # 将字符串转换为整数索引组成的列表
+    # 3. 文本向量化: dataset_sequences里是文本对应的整数序列，每个整数代表词汇表中的一个单词，每个整数序列代表对应一条文本数据
     dataset_sequences = tokenizer.texts_to_sequences(dataset_texts)
+    print('#######################################')
+    print(dataset_sequences)
 
     return dataset_sequences
 
@@ -153,7 +171,7 @@ def data_processing(normalpath, specialpath, normal_addr_related_txs_num_path, s
     dataset_texts, label = shuffle_dataset(dataset_texts, label)
 
     # 备份数据集
-    back_up_dataset(dataset_texts, label, save_path)
+    # back_up_dataset(dataset_texts, label, save_path)
 
     # 词嵌入
     dataset_sequences = _word_embedding(dataset_texts)
